@@ -2,7 +2,7 @@
 
 ## 1. Create certificate
 
-When prompted, please fill in the information fields. This script will created 'cert.pem'.
+When prompted, please fill in the information fields. This script will created 'cert.pem'. Read more about certificates [Here](https://www.sslshopper.com/article-most-common-openssl-commands.html).
 
 ```
 network-example $ ./basic_cert.sh
@@ -24,7 +24,7 @@ Email Address []:server@gmail.com
 
 ## 2. Running program
 
-Run this in a seperate terminal.
+Run this in a seperate terminal. This will start the program on port 53950.
 
 ```
 network-example $ ./network.py
@@ -34,7 +34,7 @@ Starting: tcp_listener_worker
 (b'bcast_test: 0', ('10.0.0.10', 53950))
 ```
 
-Run this in another terminal while the first one is running.
+Run this in another terminal while the first one is running. This will start the program on port 51500.
 
 ```
 network-example $ ./network.py anything
