@@ -1,4 +1,4 @@
-# Network Example for COMP 3611 Project
+# Network Example for COMP 3611 Project (Milestone 4)
 
 ## 1. Create certificate
 
