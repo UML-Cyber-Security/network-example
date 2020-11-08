@@ -36,6 +36,8 @@ Starting: tcp_listener_worker
 
 Run this in another terminal while the first one is running. This will start the program on port 51500.
 
+Notice that there is a command line argument.
+
 ```
 network-example $ ./network.py anything
 Starting: broadcast_listener_worker
