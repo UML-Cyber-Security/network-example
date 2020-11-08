@@ -2,7 +2,7 @@
 
 ## 1. Create certificate
 
-When prompted, please fill in the information fields. This script will created 'cert.pem'. Read more about certificates [Here](https://www.sslshopper.com/article-most-common-openssl-commands.html).
+When prompted, please fill in the information fields. This script will create 'cert.pem'. Read more about certificates [Here](https://www.sslshopper.com/article-most-common-openssl-commands.html).
 
 ```
 network-example $ ./basic_cert.sh
