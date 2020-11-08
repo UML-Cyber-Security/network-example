@@ -8,6 +8,7 @@ from socketserver import BaseRequestHandler, TCPServer
 
 own_ip = None
 
+
 def init_ip():
     global own_ip
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -21,10 +22,10 @@ def init_ip():
 #######################################
 class tcp_handler(BaseRequestHandler):
     def handle(self):
-            self.data = self.request.recv(1024).strip()
-            print("Echoing message from: {}".format(self.client_address[0]))
-            print(self.data)
-            self.request.sendall("ACK from server".encode())
+        self.data = self.request.recv(1024).strip()
+        print("Echoing message from: {}".format(self.client_address[0]))
+        print(self.data)
+        self.request.sendall("ACK from server".encode())
 
 
 def tcp_listener(port):
@@ -33,7 +34,7 @@ def tcp_listener(port):
     cntx.load_cert_chain('cert.pem', 'cert.pem')
 
     server = TCPServer((host, port), tcp_handler)
-    server.socket = cntx.wrap_socket(server.socket,server_side=True)
+    server.socket = cntx.wrap_socket(server.socket, server_side=True)
     try:
         server.serve_forever()
     except:
@@ -50,7 +51,7 @@ def tcp_client(port, data):
     cntx.load_verify_locations('cert.pem')
     cntx.load_cert_chain('cert.pem')
 
-    s = cntx.wrap_socket(s,server_hostname='test.server')
+    s = cntx.wrap_socket(s, server_hostname='test.server')
 
     try:
         # Establish connection to TCP server and exchange data
@@ -61,8 +62,8 @@ def tcp_client(port, data):
     finally:
         s.close()
 
-    print ("Bytes Sent:     {}".format(data))
-    print ("Bytes Received: {}".format(received.decode()))
+    print("Bytes Sent:     {}".format(data))
+    print("Bytes Received: {}".format(received.decode()))
 
 
 #######################################
@@ -85,7 +86,7 @@ def broadcast_sender(port):
         while True:
             msg = 'bcast_test: ' + str(count)
             count += 1
-            s.sendto(msg.encode('ascii'),('255.255.255.255', port))
+            s.sendto(msg.encode('ascii'), ('255.255.255.255', port))
             sleep(5)
     except KeyboardInterrupt:
         pass
@@ -103,7 +104,7 @@ def communication_manager(switch_ports=False):
 
     # broadcast to other users that you exist
     broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    broadcast_socket.bind(('',bcast_port))
+    broadcast_socket.bind(('', bcast_port))
 
     broadcast_listener_worker = Process(target=broadcast_listener,
                                         name="broadcast_listener_worker",
@@ -118,10 +119,10 @@ def communication_manager(switch_ports=False):
                                   args=(tcp_listen,))
 
     procs = [
-             broadcast_listener_worker,
-             broadcast_sender_worker,
-             tcp_listener_worker,
-            ]
+        broadcast_listener_worker,
+        broadcast_sender_worker,
+        tcp_listener_worker,
+    ]
 
     try:
         for p in procs:
@@ -140,7 +141,17 @@ def communication_manager(switch_ports=False):
             if not p.is_alive():
                 print(p.join())
 
-if len(sys.argv) > 1:
-    communication_manager()
-else:
-    communication_manager(True)
+
+#######################################
+#               Main                  #
+#######################################
+
+def main():
+    if len(sys.argv) > 1:
+        communication_manager()
+    else:
+        communication_manager(True)
+
+
+if __name__ == "__main__":
+    main()
