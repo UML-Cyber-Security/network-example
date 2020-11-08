@@ -142,7 +142,16 @@ def communication_manager(switch_ports=False):
                 print(p.join())
 
 
-if len(sys.argv) > 1:
-    communication_manager()
-else:
-    communication_manager(True)
+#######################################
+#               Main                  #
+#######################################
+
+def main():
+    if len(sys.argv) > 1:
+        communication_manager()
+    else:
+        communication_manager(True)
+
+
+if __name__ == "__main__":
+    main()
