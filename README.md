@@ -46,6 +46,8 @@ Starting: tcp_listener_worker
 
 ## 3. Sending message
 
+Type in the terminal window while the program is running to send a message.
+
 ```
 ...
 test_message
@@ -59,10 +61,13 @@ b'test_message'
 ```
 
 ```
+...
 heythere
 Bytes Sent:     heythere
 Bytes Received: ACK from server
 ...
+
+(In other terminal)
 Echoing message from: 127.0.0.1
 b'heythere'
 ```
@@ -70,7 +75,6 @@ b'heythere'
 ## 4. Close program with 'CTRL + C'
 
 ```
-
 ^C
 Terminating: broadcast_listener_worker
 listener shutting down
@@ -80,5 +84,4 @@ None
 Terminating: tcp_listener_worker
 None
 network-example $
-
 ```
