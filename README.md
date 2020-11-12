@@ -13,6 +13,8 @@ network-example $ chmod +x network.py
 
 When prompted, please fill in the information fields. This script will create 'cert.pem'. Read more about certificates [here](https://www.sslshopper.com/article-most-common-openssl-commands.html).
 
+**Notice: Common name needs to be 'test.server' if you are using this example**
+
 ```
 network-example $ ./basic_cert.sh
 Generating a 2048 bit RSA private key
@@ -45,7 +47,7 @@ Starting: tcp_listener_worker
 
 Run this in another terminal while the first one is running. This will start the program on port 51500.
 
-**Notice that there is a command line argument.**
+**Notice: there is a command line argument for the program. It can be any string.**
 
 ```
 network-example $ ./network.py anything
