@@ -5,8 +5,8 @@
 In order to run the files from the command line, you need to use the 'chmod' program to change permissions to executable. This may or may not be set when you clone this repository.
 
 ```
-$ chmod +x basic_cert.sh
-$ chmod +x network.py
+network-example $ chmod +x basic_cert.sh 
+network-example $ chmod +x network.py 
 ```
 
 ## 2. Create certificate
