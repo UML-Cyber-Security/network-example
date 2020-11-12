@@ -13,7 +13,7 @@ network-example $ chmod +x network.py
 
 When prompted, please fill in the information fields. This script will create 'cert.pem'. Read more about certificates [here](https://www.sslshopper.com/article-most-common-openssl-commands.html).
 
-**Notice: Common name needs to be 'test.server' if you are using this example**
+**Notice: Common name needs to be 'test.server' if you are using this example.**
 
 ```
 network-example $ ./basic_cert.sh
