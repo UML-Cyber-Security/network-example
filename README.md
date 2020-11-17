@@ -1,8 +1,19 @@
 # Network Example for COMP 3611 Project (Milestone 4)
 
-## 1. Create certificate
+## 1. Change file permissions
+
+In order to run the files from the command line, you need to use the 'chmod' program to change permissions to executable. This may or may not be set when you clone this repository.
+
+```
+network-example $ chmod +x basic_cert.sh 
+network-example $ chmod +x network.py 
+```
+
+## 2. Create certificate
 
 When prompted, please fill in the information fields. This script will create 'cert.pem'. Read more about certificates [here](https://www.sslshopper.com/article-most-common-openssl-commands.html).
+
+**Notice: Common name needs to be 'test.server' if you are using this example.**
 
 ```
 network-example $ ./basic_cert.sh
@@ -22,7 +33,7 @@ Common Name (eg, fully qualified host name) []:test.server
 Email Address []:server@gmail.com
 ```
 
-## 2. Running program
+## 3. Running program
 
 Run this in a seperate terminal. This will start the program on port 53950.
 
@@ -36,7 +47,7 @@ Starting: tcp_listener_worker
 
 Run this in another terminal while the first one is running. This will start the program on port 51500.
 
-**Notice that there is a command line argument.**
+**Notice: there is a command line argument for the program. It can be any string.**
 
 ```
 network-example $ ./network.py anything
@@ -46,7 +57,7 @@ Starting: tcp_listener_worker
 (b'bcast_test: 0', ('10.0.0.10', 51500))
 ```
 
-## 3. Sending message
+## 4. Sending message
 
 Type in the terminal window while the program is running to send a message.
 
@@ -74,7 +85,7 @@ Echoing message from: 127.0.0.1
 b'heythere'
 ```
 
-## 4. Close program with 'CTRL + C'
+## 5. Close program with 'CTRL + C'
 
 ```
 ^C
