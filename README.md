@@ -98,3 +98,18 @@ Terminating: tcp_listener_worker
 None
 network-example $
 ```
+
+## 6. Running on different hosts
+
+Follow similar steps as above, just use network-remote.py instead of network.py.
+For example, if running program on two hosts, one with IP 10.0.0.10 and the other with 10.0.0.11, do the following:
+
+```
+Host 1:
+./network-remote.py 10.0.0.10
+
+Host 2:
+./network-remote.py 10.0.0.11
+```
+
+Rest of usage is the same as the other example.
