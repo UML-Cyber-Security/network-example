@@ -2,9 +2,14 @@
 import sys
 import ssl
 import socket
+import argparse
 from time import sleep
 from multiprocessing import Process
 from socketserver import BaseRequestHandler, TCPServer
+
+parser = argparse.ArgumentParser(description='Basic python networking example')
+parser.add_argument('rhost')
+args = parser.parse_args()
 
 own_ip = None
 
@@ -42,7 +47,7 @@ def tcp_listener(port):
         server.shutdown()
 
 
-def tcp_client(port, data,remote_ip):
+def tcp_client(port, data):
 
     # Initialize a TCP client socket using SOCK_STREAM
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,11 +56,11 @@ def tcp_client(port, data,remote_ip):
     cntx.load_verify_locations('cert.pem')
     cntx.load_cert_chain('cert.pem')
 
-    s = cntx.wrap_socket(s, server_hostname=remote_ip)
+    s = cntx.wrap_socket(s, server_hostname='test.server')
 
     try:
         # Establish connection to TCP server and exchange data
-        s.connect((remote_ip, port))
+        s.connect((args.rhost, port))
         s.sendall(data.encode())
         # Read data from the TCP server and close the connection
         received = s.recv(1024)
@@ -95,7 +100,7 @@ def broadcast_sender(port):
 #######################################
 #               Driver                #
 #######################################
-def communication_manager(remote_ip):
+def communication_manager():
     # find own ip
     init_ip()
     bcast_port = 1337
@@ -106,30 +111,25 @@ def communication_manager(remote_ip):
     broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     broadcast_socket.bind(('', bcast_port))
 
-    broadcast_listener_worker = Process(target=broadcast_listener,
-                                        name="broadcast_listener_worker",
-                                        args=(broadcast_socket,))
+    procs = []
+    procs.append(Process(target=broadcast_listener,
+                 name="broadcast_listener_worker",
+                 args=(broadcast_socket,)))
 
-    broadcast_sender_worker = Process(target=broadcast_sender,
-                                      name="broadcast_sender_worker",
-                                      args=(bcast_port,))
+    procs.append(Process(target=broadcast_sender,
+                 name="broadcast_sender_worker",
+                 args=(bcast_port,)))
 
-    tcp_listener_worker = Process(target=tcp_listener,
-                                  name="tcp_listener_worker",
-                                  args=(tcp_port,))
-
-    procs = [
-        broadcast_listener_worker,
-        broadcast_sender_worker,
-        tcp_listener_worker,
-    ]
+    procs.append(Process(target=tcp_listener,
+                 name="tcp_listener_worker",
+                 args=(tcp_port,)))
 
     try:
         for p in procs:
             print("Starting: {}".format(p.name))
             p.start()
         while True:
-            tcp_client(tcp_port, input(),remote_ip)
+            tcp_client(tcp_port, input("Enter message to send: "))
             sleep(1)
 
     except KeyboardInterrupt:
@@ -147,10 +147,7 @@ def communication_manager(remote_ip):
 #######################################
 
 def main():
-    if len(sys.argv) == 2:
-        communication_manager(sys.argv[1])
-    else:
-        print("usage: ./network.py REMOTE_IP")
+    communication_manager()
 
 
 if __name__ == "__main__":

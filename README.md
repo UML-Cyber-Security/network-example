@@ -11,31 +11,20 @@ network-example $ chmod +x network.py
 
 ## 2. Create certificate
 
-When prompted, please fill in the information fields. This script will create 'cert.pem'. Read more about certificates [here](https://www.sslshopper.com/article-most-common-openssl-commands.html).
-
-**Notice: Common name needs to be 'test.server' if you are using this example.**
+This script will create 'cert.pem'. 
+Read more about certificates [here](https://www.sslshopper.com/article-most-common-openssl-commands.html).
 
 ```
 network-example $ ./basic_cert.sh
-Generating a 2048 bit RSA private key
-...........................+++
-.........+++
+Generating a RSA private key
+.................................+++++
+..................................+++++
 writing new private key to 'cert.pem'
------
-...
------
-Country Name (2 letter code) []:US
-State or Province Name (full name) []:Massachusetts
-Locality Name (eg, city) []:Lowell
-Organization Name (eg, company) []:UML
-Organizational Unit Name (eg, section) []:100
-Common Name (eg, fully qualified host name) []:test.server
-Email Address []:server@gmail.com
 ```
 
 ## 3. Running program
 
-Run this in a seperate terminal. This will start the program on port 53950.
+Run `network.py` to start the program.
 
 ```
 network-example $ ./network.py
@@ -45,12 +34,11 @@ Starting: tcp_listener_worker
 (b'bcast_test: 0', ('10.0.0.10', 53950))
 ```
 
-Run this in another terminal while the first one is running. This will start the program on port 51500.
-
-**Notice: there is a command line argument for the program. It can be any string.**
+Run the script in another terminal while the first one is running. This time with the `--alt` option.
+This will start the program on a different port.
 
 ```
-network-example $ ./network.py anything
+network-example $ ./network.py --alt
 Starting: broadcast_listener_worker
 Starting: broadcast_sender_worker
 Starting: tcp_listener_worker
@@ -102,7 +90,8 @@ network-example $
 ## 6. Running on different hosts
 
 Follow similar steps as above, just use network-remote.py instead of network.py.
-For example, if running program on two hosts, one with IP 10.0.0.10 and the other with 10.0.0.11, do the following:
+Make sure that both servers have the same `cert.pem` file generated earlier.
+For example, if running the program on two hosts, one with IP 10.0.0.10 and the other with 10.0.0.11, do the following:
 
 ```
 Host 1:

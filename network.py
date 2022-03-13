@@ -2,9 +2,14 @@
 import sys
 import ssl
 import socket
+import argparse
 from time import sleep
 from multiprocessing import Process
 from socketserver import BaseRequestHandler, TCPServer
+
+parser = argparse.ArgumentParser(description='Basic python networking example')
+parser.add_argument('--alt', action='store_true')
+args = parser.parse_args()
 
 own_ip = None
 
@@ -29,7 +34,7 @@ class tcp_handler(BaseRequestHandler):
 
 
 def tcp_listener(port):
-    host = "localhost"
+    host = own_ip
     cntx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     cntx.load_cert_chain('cert.pem', 'cert.pem')
 
@@ -43,7 +48,7 @@ def tcp_listener(port):
 
 
 def tcp_client(port, data):
-    host_ip = "127.0.0.1"
+    host_ip = own_ip
 
     # Initialize a TCP client socket using SOCK_STREAM
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -62,8 +67,8 @@ def tcp_client(port, data):
     finally:
         s.close()
 
-    print("Bytes Sent:     {}".format(data))
-    print("Bytes Received: {}".format(received.decode()))
+    print(f"Bytes Sent:     {data}")
+    print(f"Bytes Received: {received.decode()}")
 
 
 #######################################
@@ -73,7 +78,7 @@ def broadcast_listener(socket):
     try:
         while True:
             data = socket.recvfrom(512)
-            print(data)
+            print("Broadcast received: ", data)
     except KeyboardInterrupt:
         pass
 
@@ -95,41 +100,36 @@ def broadcast_sender(port):
 #######################################
 #               Driver                #
 #######################################
-def communication_manager(switch_ports=False):
+def communication_manager():
     # find own ip
     init_ip()
-    bcast_port = 1337 if switch_ports else 1338
-    tcp_listen = 9990 if switch_ports else 9995
-    tcp_port = 9995 if switch_ports else 9990
+
+    bcast_port = 1337 if args.alt else 1338
+    tcp_listen = 9990 if args.alt else 9995
+    tcp_port = 9995 if args.alt else 9990
 
     # broadcast to other users that you exist
     broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     broadcast_socket.bind(('', bcast_port))
+    procs = []
+    procs.append(Process(target=broadcast_listener,
+                         name="broadcast_listener_worker",
+                         args=(broadcast_socket,)))
 
-    broadcast_listener_worker = Process(target=broadcast_listener,
-                                        name="broadcast_listener_worker",
-                                        args=(broadcast_socket,))
+    procs.append(Process(target=broadcast_sender,
+                 name="broadcast_sender_worker",
+                 args=(bcast_port,)))
 
-    broadcast_sender_worker = Process(target=broadcast_sender,
-                                      name="broadcast_sender_worker",
-                                      args=(bcast_port,))
-
-    tcp_listener_worker = Process(target=tcp_listener,
-                                  name="tcp_listener_worker",
-                                  args=(tcp_listen,))
-
-    procs = [
-        broadcast_listener_worker,
-        broadcast_sender_worker,
-        tcp_listener_worker,
-    ]
+    procs.append(Process(target=tcp_listener,
+                 name="tcp_listener_worker",
+                 args=(tcp_listen,)))
 
     try:
         for p in procs:
             print("Starting: {}".format(p.name))
             p.start()
         while True:
-            tcp_client(tcp_port, input())
+            tcp_client(tcp_port, input("Enter message to send: "))
             sleep(1)
 
     except KeyboardInterrupt:
@@ -145,12 +145,8 @@ def communication_manager(switch_ports=False):
 #######################################
 #               Main                  #
 #######################################
-
 def main():
-    if len(sys.argv) > 1:
-        communication_manager()
-    else:
-        communication_manager(True)
+    communication_manager()
 
 
 if __name__ == "__main__":
