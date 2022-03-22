@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+
+import argparse
 import sys
 import ssl
 import socket
-import argparse
+import signal
+from threading import Thread
 from time import sleep
-from multiprocessing import Process
+from multiprocessing import Event, Process
 from socketserver import BaseRequestHandler, TCPServer
 
 parser = argparse.ArgumentParser(description='Basic python networking example')
@@ -33,18 +36,18 @@ class tcp_handler(BaseRequestHandler):
         self.request.sendall("ACK from server".encode())
 
 
-def tcp_listener(port):
+def tcp_listener(port, event):
     host = own_ip
     cntx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     cntx.load_cert_chain('cert.pem', 'cert.pem')
 
     server = TCPServer((host, port), tcp_handler)
     server.socket = cntx.wrap_socket(server.socket, server_side=True)
-    try:
-        server.serve_forever()
-    except:
-        print("listener shutting down")
-        server.shutdown()
+
+    # Spawn server in a separate thread so we can shut it down on signal
+    Thread(target=lambda s: s.serve_forever(), args=(server,)).start()
+    event.wait()
+    server.shutdown()
 
 
 def tcp_client(port, data):
@@ -74,27 +77,30 @@ def tcp_client(port, data):
 #######################################
 #          Broadcast Example          #
 #######################################
-def broadcast_listener(socket):
-    try:
-        while True:
-            data = socket.recvfrom(512)
-            print(data)
-    except KeyboardInterrupt:
-        pass
+def broadcast_listener(port, event):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind(('', port))
+    s.settimeout(2)
+    while not event.is_set():
+        try:
+            data = s.recvfrom(512)
+            print(f"Received data from broadcast: {data}")
+        except socket.timeout:
+            pass
 
 
-def broadcast_sender(port):
+def broadcast_sender(port, event):
     count = 0
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        while True:
-            msg = 'bcast_test: ' + str(count)
-            count += 1
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    while not event.is_set():
+        msg = 'bcast_test: ' + str(count)
+        count += 1
+        try:
             s.sendto(msg.encode('ascii'), ('255.255.255.255', port))
-            sleep(5)
-    except KeyboardInterrupt:
-        pass
+        except Exception as e:
+            print(f"Exiting sender: {e}")
+        sleep(5)
 
 
 #######################################
@@ -106,49 +112,44 @@ def communication_manager():
     bcast_port = 1337
     tcp_port = 9990
 
+    default_handler = signal.getsignal(signal.SIGINT)
+    # ignore SIGINT before procs are created so that they inherit this
+    signal.signal(signal.SIGINT,signal.SIG_IGN)
 
-    # broadcast to other users that you exist
-    broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    broadcast_socket.bind(('', bcast_port))
+    event = Event()
 
     procs = []
     procs.append(Process(target=broadcast_listener,
                  name="broadcast_listener_worker",
-                 args=(broadcast_socket,)))
+                 args=(bcast_port, event,)))
 
     procs.append(Process(target=broadcast_sender,
                  name="broadcast_sender_worker",
-                 args=(bcast_port,)))
+                 args=(bcast_port, event,)))
 
     procs.append(Process(target=tcp_listener,
                  name="tcp_listener_worker",
-                 args=(tcp_port,)))
+                 args=(tcp_port, event,)))
 
     try:
         for p in procs:
             print("Starting: {}".format(p.name))
             p.start()
+
+        # Restore regular signal handler so that main proc can handle ctrl+C
+        signal.signal(signal.SIGINT,default_handler)
         while True:
             tcp_client(tcp_port, input("Enter message to send: "))
             sleep(1)
 
     except KeyboardInterrupt:
+        print("SIGINT received, please wait while program exits")
+        event.set()
+    finally:
         for p in procs:
             print("Terminating: {}".format(p.name))
-            if p.is_alive():
-                p.terminate()
-                sleep(0.1)
-            if not p.is_alive():
-                print(p.join())
-
-
-#######################################
-#               Main                  #
-#######################################
-
-def main():
-    communication_manager()
+            p.join()
 
 
 if __name__ == "__main__":
-    main()
+    communication_manager()

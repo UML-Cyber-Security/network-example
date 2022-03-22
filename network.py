@@ -74,11 +74,13 @@ def tcp_client(port, data):
 #######################################
 #          Broadcast Example          #
 #######################################
-def broadcast_listener(socket):
+def broadcast_listener(port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind(('', port))
     try:
         while True:
-            data = socket.recvfrom(512)
-            print("Broadcast received: ", data)
+            data = s.recvfrom(512)
+            print(f"Broadcast received: {data}")
     except KeyboardInterrupt:
         pass
 
@@ -108,13 +110,10 @@ def communication_manager():
     tcp_listen = 9990 if args.alt else 9995
     tcp_port = 9995 if args.alt else 9990
 
-    # broadcast to other users that you exist
-    broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    broadcast_socket.bind(('', bcast_port))
     procs = []
     procs.append(Process(target=broadcast_listener,
                          name="broadcast_listener_worker",
-                         args=(broadcast_socket,)))
+                         args=(bcast_port,)))
 
     procs.append(Process(target=broadcast_sender,
                  name="broadcast_sender_worker",
@@ -142,12 +141,5 @@ def communication_manager():
                 print(p.join())
 
 
-#######################################
-#               Main                  #
-#######################################
-def main():
-    communication_manager()
-
-
 if __name__ == "__main__":
-    main()
+    communication_manager()

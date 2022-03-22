@@ -102,3 +102,5 @@ Host 2:
 ```
 
 Rest of usage is the same as the other example.
+Note the usage of signal handlers and multiprocessing.Event.
+It's not necessary for a simple shutdown of the program, but it can be useful for more complex programs.
