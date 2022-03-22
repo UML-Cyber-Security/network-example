@@ -7,7 +7,7 @@ import socket
 import signal
 from threading import Thread
 from time import sleep
-from multiprocessing import Event, Process
+from multiprocessing import Event, Process, Queue
 from socketserver import BaseRequestHandler, TCPServer
 
 parser = argparse.ArgumentParser(description='Basic python networking example')
@@ -83,24 +83,35 @@ def broadcast_listener(port, event):
     s.settimeout(2)
     while not event.is_set():
         try:
-            data = s.recvfrom(512)
-            print(f"Received data from broadcast: {data}")
+            msg, sender = s.recvfrom(512)
+            ip = sender[0]
+            if ip != own_ip:
+                print(f"Received data from broadcast: {msg}")
         except socket.timeout:
             pass
 
 
-def broadcast_sender(port, event):
-    count = 0
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    while not event.is_set():
-        msg = 'bcast_test: ' + str(count)
-        count += 1
+def broadcast_sender(sock, port, event, queue, name):
+    while queue.empty():
+        sleep(1)
+
+    while not event.is_set() and not queue.empty():
+        data = queue.get()
+        msg = f'bcast_test from {name}: ' + data
         try:
-            s.sendto(msg.encode('ascii'), ('255.255.255.255', port))
+            sock.sendto(msg.encode('ascii'), ('255.255.255.255', port))
         except Exception as e:
             print(f"Exiting sender: {e}")
         sleep(5)
+
+
+def work_generator(queue, event):
+    count = 0
+    while not event.is_set():
+        if queue.qsize() < 100:
+            for _ in range(10):
+                queue.put(str(count))
+                count += 1
 
 
 #######################################
@@ -117,15 +128,27 @@ def communication_manager():
     signal.signal(signal.SIGINT,signal.SIG_IGN)
 
     event = Event()
+    queue = Queue()
 
     procs = []
     procs.append(Process(target=broadcast_listener,
                  name="broadcast_listener_worker",
                  args=(bcast_port, event,)))
 
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
     procs.append(Process(target=broadcast_sender,
                  name="broadcast_sender_worker",
-                 args=(bcast_port, event,)))
+                 args=(s, bcast_port, event, queue, "worker1")))
+
+    procs.append(Process(target=broadcast_sender,
+                 name="broadcast_sender_worker2",
+                 args=(s, bcast_port, event, queue, "worker2")))
+
+    procs.append(Process(target=work_generator,
+                 name="work_generator",
+                 args=(queue, event)))
 
     procs.append(Process(target=tcp_listener,
                  name="tcp_listener_worker",
